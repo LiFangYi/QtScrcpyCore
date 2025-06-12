@@ -58,7 +58,7 @@ const QString &AdbProcessImpl::getAdbPath()
 void AdbProcessImpl::initSignals()
 {
     // aboutToQuit not exit event loop, so deletelater is ok
-    // connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, this, &AdbProcessImpl::deleteLater);
+    connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, this, &AdbProcessImpl::deleteLater);
 
     connect(this, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this, [this](int exitCode, QProcess::ExitStatus exitStatus) {
         if (NormalExit == exitStatus && 0 == exitCode) {
