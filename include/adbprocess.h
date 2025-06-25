@@ -31,6 +31,7 @@ public:
     void reverse(const QString &serial, const QString &deviceSocketName, quint16 localPort);
     void reverseRemove(const QString &serial, const QString &deviceSocketName);
     void push(const QString &serial, const QString &local, const QString &remote);
+    void pull(const QString& serial, const QString& remote, const QString& local);
     void install(const QString &serial, const QString &local);
     void removePath(const QString &serial, const QString &path);
     bool isRuning();

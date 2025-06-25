@@ -9,111 +9,116 @@
 
 QString g_adbPath;
 
-namespace qsc {
-
-AdbProcess::AdbProcess(QObject *parent)
-    : QObject(parent)
-    , m_adbImpl(new AdbProcessImpl())
+namespace qsc
 {
-    connect(m_adbImpl, &AdbProcessImpl::adbProcessImplResult, this, &qsc::AdbProcess::adbProcessResult);
-}
+    AdbProcess::AdbProcess(QObject* parent)
+        : QObject(parent)
+          , m_adbImpl(new AdbProcessImpl())
+    {
+        connect(m_adbImpl, &AdbProcessImpl::adbProcessImplResult, this, &qsc::AdbProcess::adbProcessResult);
+    }
 
-AdbProcess::~AdbProcess()
-{
-    if (m_adbImpl->isRuning()) {
+    AdbProcess::~AdbProcess()
+    {
+        if (m_adbImpl->isRuning())
+        {
+            m_adbImpl->kill();
+        }
+        delete m_adbImpl;
+    }
+
+    void AdbProcess::setAdbPath(const QString& adbPath)
+    {
+        g_adbPath = adbPath;
+    }
+
+    void AdbProcess::execute(const QString& serial, const QStringList& args)
+    {
+        m_adbImpl->execute(serial, args);
+    }
+
+    bool AdbProcess::isRuning()
+    {
+        return m_adbImpl->isRuning();
+    }
+
+    void AdbProcess::setShowTouchesEnabled(const QString& serial, bool enabled)
+    {
+        m_adbImpl->setShowTouchesEnabled(serial, enabled);
+    }
+
+    void AdbProcess::kill()
+    {
         m_adbImpl->kill();
     }
-    delete m_adbImpl;
-}
 
-void AdbProcess::setAdbPath(const QString &adbPath)
-{
-    g_adbPath = adbPath;
-}
+    QStringList AdbProcess::arguments()
+    {
+        return m_adbImpl->arguments();
+    }
 
-void AdbProcess::execute(const QString &serial, const QStringList &args)
-{
-    m_adbImpl->execute(serial, args);
-}
+    QStringList AdbProcess::getDevicesSerialFromStdOut()
+    {
+        return m_adbImpl->getDevicesSerialFromStdOut();
+    }
 
-bool AdbProcess::isRuning()
-{
-    return m_adbImpl->isRuning();
-}
+    QString AdbProcess::getDeviceIPFromStdOut()
+    {
+        return m_adbImpl->getDeviceIPFromStdOut();
+    }
 
-void AdbProcess::setShowTouchesEnabled(const QString &serial, bool enabled)
-{
-    m_adbImpl->setShowTouchesEnabled(serial, enabled);
-}
+    QString AdbProcess::getDeviceIPByIpFromStdOut()
+    {
+        return m_adbImpl->getDeviceIPByIpFromStdOut();
+    }
 
-void AdbProcess::kill()
-{
-    m_adbImpl->kill();
-}
+    QString AdbProcess::getStdOut()
+    {
+        return m_adbImpl->getStdOut();
+    }
 
-QStringList AdbProcess::arguments()
-{
-    return m_adbImpl->arguments();
-}
+    QString AdbProcess::getErrorOut()
+    {
+        return m_adbImpl->getErrorOut();
+    }
 
-QStringList AdbProcess::getDevicesSerialFromStdOut()
-{
-    return m_adbImpl->getDevicesSerialFromStdOut();
-}
+    void AdbProcess::forward(const QString& serial, quint16 localPort, const QString& deviceSocketName)
+    {
+        m_adbImpl->forward(serial, localPort, deviceSocketName);
+    }
 
-QString AdbProcess::getDeviceIPFromStdOut()
-{
-    return m_adbImpl->getDeviceIPFromStdOut();
-}
+    void AdbProcess::forwardRemove(const QString& serial, quint16 localPort)
+    {
+        m_adbImpl->forwardRemove(serial, localPort);
+    }
 
-QString AdbProcess::getDeviceIPByIpFromStdOut()
-{
-    return m_adbImpl->getDeviceIPByIpFromStdOut();
-}
+    void AdbProcess::reverse(const QString& serial, const QString& deviceSocketName, quint16 localPort)
+    {
+        m_adbImpl->reverse(serial, deviceSocketName, localPort);
+    }
 
-QString AdbProcess::getStdOut()
-{
-    return m_adbImpl->getStdOut();
-}
+    void AdbProcess::reverseRemove(const QString& serial, const QString& deviceSocketName)
+    {
+        m_adbImpl->reverseRemove(serial, deviceSocketName);
+    }
 
-QString AdbProcess::getErrorOut()
-{
-    return m_adbImpl->getErrorOut();
-}
+    void AdbProcess::push(const QString& serial, const QString& local, const QString& remote)
+    {
+        m_adbImpl->push(serial, local, remote);
+    }
 
-void AdbProcess::forward(const QString &serial, quint16 localPort, const QString &deviceSocketName)
-{
-    m_adbImpl->forward(serial, localPort, deviceSocketName);
-}
+    void AdbProcess::pull(const QString& serial, const QString& remote, const QString& local)
+    {
+        m_adbImpl->pull(serial, remote, local);
+    }
 
-void AdbProcess::forwardRemove(const QString &serial, quint16 localPort)
-{
-    m_adbImpl->forwardRemove(serial, localPort);
-}
+    void AdbProcess::install(const QString& serial, const QString& local)
+    {
+        m_adbImpl->install(serial, local);
+    }
 
-void AdbProcess::reverse(const QString &serial, const QString &deviceSocketName, quint16 localPort)
-{
-    m_adbImpl->reverse(serial, deviceSocketName, localPort);
-}
-
-void AdbProcess::reverseRemove(const QString &serial, const QString &deviceSocketName)
-{
-    m_adbImpl->reverseRemove(serial, deviceSocketName);
-}
-
-void AdbProcess::push(const QString &serial, const QString &local, const QString &remote)
-{
-    m_adbImpl->push(serial, local, remote);
-}
-
-void AdbProcess::install(const QString &serial, const QString &local)
-{
-    m_adbImpl->install(serial, local);
-}
-
-void AdbProcess::removePath(const QString &serial, const QString &path)
-{
-    m_adbImpl->removePath(serial, path);
-}
-
+    void AdbProcess::removePath(const QString& serial, const QString& path)
+    {
+        m_adbImpl->removePath(serial, path);
+    }
 }

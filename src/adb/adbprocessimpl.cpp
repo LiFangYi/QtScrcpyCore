@@ -14,41 +14,48 @@
 QString AdbProcessImpl::s_adbPath = "";
 extern QString g_adbPath;
 
-AdbProcessImpl::AdbProcessImpl(QObject *parent) : QProcess(parent)
+AdbProcessImpl::AdbProcessImpl(QObject* parent) : QProcess(parent)
 {
     initSignals();
 }
 
 AdbProcessImpl::~AdbProcessImpl()
 {
-    if (isRuning()) {
+    if (isRuning())
+    {
         close();
     }
 }
 
-const QString &AdbProcessImpl::getAdbPath()
+const QString& AdbProcessImpl::getAdbPath()
 {
-    if (s_adbPath.isEmpty()) {
+    if (s_adbPath.isEmpty())
+    {
         QStringList potentialPaths;
         potentialPaths << QString::fromLocal8Bit(qgetenv("QTSCRCPY_ADB_PATH")) << g_adbPath
 #ifdef Q_OS_WIN32
-                       << QCoreApplication::applicationDirPath() + "/adb.exe";
+            << QCoreApplication::applicationDirPath() + "/adb.exe";
 #else
                        << QCoreApplication::applicationDirPath() + "/adb";
 #endif
 
-        for (const QString &path : potentialPaths) {
+        for (const QString& path : potentialPaths)
+        {
             QFileInfo fileInfo(path);
-            if (!path.isEmpty() && fileInfo.isFile()) {
+            if (!path.isEmpty() && fileInfo.isFile())
+            {
                 s_adbPath = path;
                 break;
             }
         }
 
-        if (s_adbPath.isEmpty()) {
+        if (s_adbPath.isEmpty())
+        {
             // 如果所有路径都不满足条件，可以选择抛出异常或设置默认值
             qWarning() << "ADB路径未找到";
-        } else {
+        }
+        else
+        {
             qInfo("adb path: %s", QDir(s_adbPath).absolutePath().toUtf8().data());
         }
     }
@@ -60,47 +67,62 @@ void AdbProcessImpl::initSignals()
     // aboutToQuit not exit event loop, so deletelater is ok
     connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, this, &AdbProcessImpl::deleteLater);
 
-    connect(this, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this, [this](int exitCode, QProcess::ExitStatus exitStatus) {
-        if (NormalExit == exitStatus && 0 == exitCode) {
-            emit adbProcessImplResult(qsc::AdbProcess::AER_SUCCESS_EXEC);
-        } else {
-            //P7C0218510000537        unauthorized ,手机端此时弹出调试认证，要允许调试
-            emit adbProcessImplResult(qsc::AdbProcess::AER_ERROR_EXEC);
-        }
-        qDebug() << "adb return " << exitCode << "exit status " << exitStatus;
-    });
+    connect(this, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this, [this
+            ](int exitCode, QProcess::ExitStatus exitStatus)
+            {
+                if (NormalExit == exitStatus && 0 == exitCode)
+                {
+                    emit adbProcessImplResult(qsc::AdbProcess::AER_SUCCESS_EXEC);
+                }
+                else
+                {
+                    //P7C0218510000537        unauthorized ,手机端此时弹出调试认证，要允许调试
+                    emit adbProcessImplResult(qsc::AdbProcess::AER_ERROR_EXEC);
+                }
+                qDebug() << "adb return " << exitCode << "exit status " << exitStatus;
+            });
 
-    connect(this, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
-        if (QProcess::FailedToStart == error) {
+    connect(this, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error)
+    {
+        if (QProcess::FailedToStart == error)
+        {
             emit adbProcessImplResult(qsc::AdbProcess::AER_ERROR_MISSING_BINARY);
-        } else {
+        }
+        else
+        {
             emit adbProcessImplResult(qsc::AdbProcess::AER_ERROR_START);
             QString err = QString("qprocess start error:%1 %2").arg(program()).arg(arguments().join(" "));
             qCritical() << err.toStdString().c_str();
         }
     });
 
-    connect(this, &QProcess::readyReadStandardError, this, [this]() {
+    connect(this, &QProcess::readyReadStandardError, this, [this]()
+    {
         QString tmp = QString::fromUtf8(readAllStandardError()).trimmed();
         m_errorOutput += tmp;
         qWarning() << QString("AdbProcessImpl::error:%1").arg(tmp).toStdString().data();
     });
 
-    connect(this, &QProcess::readyReadStandardOutput, this, [this]() {
+    connect(this, &QProcess::readyReadStandardOutput, this, [this]()
+    {
         QString tmp = QString::fromUtf8(readAllStandardOutput()).trimmed();
         m_standardOutput += tmp;
         qInfo() << QString("AdbProcessImpl::out:%1").arg(tmp).toStdString().data();
     });
 
-    connect(this, &QProcess::started, this, [this]() { emit adbProcessImplResult(qsc::AdbProcess::AER_SUCCESS_START); });
+    connect(this, &QProcess::started, this, [this]()
+    {
+        emit adbProcessImplResult(qsc::AdbProcess::AER_SUCCESS_START);
+    });
 }
 
-void AdbProcessImpl::execute(const QString &serial, const QStringList &args)
+void AdbProcessImpl::execute(const QString& serial, const QStringList& args)
 {
     m_standardOutput = "";
     m_errorOutput = "";
     QStringList adbArgs;
-    if (!serial.isEmpty()) {
+    if (!serial.isEmpty())
+    {
         adbArgs << "-s" << serial;
     }
     adbArgs << args;
@@ -110,21 +132,24 @@ void AdbProcessImpl::execute(const QString &serial, const QStringList &args)
 
 bool AdbProcessImpl::isRuning()
 {
-    if (QProcess::NotRunning == state()) {
+    if (QProcess::NotRunning == state())
+    {
         return false;
-    } else {
+    }
+    else
+    {
         return true;
     }
 }
 
-void AdbProcessImpl::setShowTouchesEnabled(const QString &serial, bool enabled)
+void AdbProcessImpl::setShowTouchesEnabled(const QString& serial, bool enabled)
 {
     QStringList adbArgs;
     adbArgs << "shell"
-            << "settings"
-            << "put"
-            << "system"
-            << "show_touches";
+        << "settings"
+        << "put"
+        << "system"
+        << "show_touches";
     adbArgs << (enabled ? "1" : "0");
     execute(serial, adbArgs);
 }
@@ -141,9 +166,11 @@ QStringList AdbProcessImpl::getDevicesSerialFromStdOut()
     QRegularExpression tExp("\t");
 #endif
     QStringList devicesInfoList = m_standardOutput.split(lineExp);
-    for (QString deviceInfo : devicesInfoList) {
+    for (QString deviceInfo : devicesInfoList)
+    {
         QStringList deviceInfos = deviceInfo.split(tExp);
-        if (2 == deviceInfos.count() && 0 == deviceInfos[1].compare("device")) {
+        if (2 == deviceInfos.count() && 0 == deviceInfos[1].compare("device"))
+        {
             serials << deviceInfos[0];
         }
     }
@@ -163,7 +190,8 @@ QString AdbProcessImpl::getDeviceIPFromStdOut()
 #else
     QRegularExpression ipRegExp(strIPExp, QRegularExpression::CaseInsensitiveOption);
     QRegularExpressionMatch match = ipRegExp.match(m_standardOutput);
-    if (match.hasMatch()) {
+    if (match.hasMatch())
+    {
         ip = match.captured(0);
         ip = ip.right(ip.size() - 10);
     }
@@ -186,7 +214,8 @@ QString AdbProcessImpl::getDeviceIPByIpFromStdOut()
 #else
     QRegularExpression ipRegExp(strIPExp, QRegularExpression::CaseInsensitiveOption);
     QRegularExpressionMatch match = ipRegExp.match(m_standardOutput);
-    if (match.hasMatch()) {
+    if (match.hasMatch())
+    {
         ip = match.captured(0);
         ip = ip.right(ip.size() - 14);
     }
@@ -205,7 +234,7 @@ QString AdbProcessImpl::getErrorOut()
     return m_errorOutput;
 }
 
-void AdbProcessImpl::forward(const QString &serial, quint16 localPort, const QString &deviceSocketName)
+void AdbProcessImpl::forward(const QString& serial, quint16 localPort, const QString& deviceSocketName)
 {
     QStringList adbArgs;
     adbArgs << "forward";
@@ -214,7 +243,7 @@ void AdbProcessImpl::forward(const QString &serial, quint16 localPort, const QSt
     execute(serial, adbArgs);
 }
 
-void AdbProcessImpl::forwardRemove(const QString &serial, quint16 localPort)
+void AdbProcessImpl::forwardRemove(const QString& serial, quint16 localPort)
 {
     QStringList adbArgs;
     adbArgs << "forward";
@@ -223,7 +252,7 @@ void AdbProcessImpl::forwardRemove(const QString &serial, quint16 localPort)
     execute(serial, adbArgs);
 }
 
-void AdbProcessImpl::reverse(const QString &serial, const QString &deviceSocketName, quint16 localPort)
+void AdbProcessImpl::reverse(const QString& serial, const QString& deviceSocketName, quint16 localPort)
 {
     QStringList adbArgs;
     adbArgs << "reverse";
@@ -232,7 +261,7 @@ void AdbProcessImpl::reverse(const QString &serial, const QString &deviceSocketN
     execute(serial, adbArgs);
 }
 
-void AdbProcessImpl::reverseRemove(const QString &serial, const QString &deviceSocketName)
+void AdbProcessImpl::reverseRemove(const QString& serial, const QString& deviceSocketName)
 {
     QStringList adbArgs;
     adbArgs << "reverse";
@@ -241,7 +270,7 @@ void AdbProcessImpl::reverseRemove(const QString &serial, const QString &deviceS
     execute(serial, adbArgs);
 }
 
-void AdbProcessImpl::push(const QString &serial, const QString &local, const QString &remote)
+void AdbProcessImpl::push(const QString& serial, const QString& local, const QString& remote)
 {
     QStringList adbArgs;
     adbArgs << "push";
@@ -250,7 +279,16 @@ void AdbProcessImpl::push(const QString &serial, const QString &local, const QSt
     execute(serial, adbArgs);
 }
 
-void AdbProcessImpl::install(const QString &serial, const QString &local)
+void AdbProcessImpl::pull(const QString& serial, const QString& remote, const QString& local)
+{
+    QStringList adbArgs;
+    adbArgs << "push";
+    adbArgs << remote;
+    adbArgs << local;
+    execute(serial, adbArgs);
+}
+
+void AdbProcessImpl::install(const QString& serial, const QString& local)
 {
     QStringList adbArgs;
     adbArgs << "install";
@@ -259,7 +297,7 @@ void AdbProcessImpl::install(const QString &serial, const QString &local)
     execute(serial, adbArgs);
 }
 
-void AdbProcessImpl::removePath(const QString &serial, const QString &path)
+void AdbProcessImpl::removePath(const QString& serial, const QString& path)
 {
     QStringList adbArgs;
     adbArgs << "shell";
