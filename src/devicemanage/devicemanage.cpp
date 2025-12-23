@@ -4,9 +4,6 @@
 #include <QWheelEvent>
 
 #include "devicemanage.h"
-
-#include <QCryptographicHash>
-
 #include "device.h"
 #include "demuxer.h"
 
@@ -47,10 +44,11 @@ bool DeviceManage::connectDevice(qsc::DeviceParams params)
         qInfo("over the maximum number of connections");
         return false;
     }
-
+    /*
+    // 没有必要分配端口，都用27183即可，连接建立以后server会释放监听的
     quint16 port = 0;
     if (params.useReverse) {
-         port = getFreePort(params.serial);
+         port = getFreePort();
         if (0 == port) {
             qInfo("no port available, automatically switch to forward");
             params.useReverse = false;
@@ -59,7 +57,7 @@ bool DeviceManage::connectDevice(qsc::DeviceParams params)
             qInfo("free port %d", port);
         }
     }
-
+    */
     IDevice *device = new Device(params);
     connect(device, &Device::deviceConnected, this, &DeviceManage::onDeviceConnected);
     connect(device, &Device::deviceDisconnected, this, &DeviceManage::onDeviceDisconnected);
@@ -109,12 +107,26 @@ void DeviceManage::onDeviceDisconnected(QString serial)
     removeDevice(serial);
 }
 
-quint16 DeviceManage::getFreePort(const QString &serial) const
+quint16 DeviceManage::getFreePort()
 {
-    QByteArray hash = QCryptographicHash::hash(serial.toUtf8(), QCryptographicHash::Sha256);
-    const quint16 port = (static_cast<quint8>(hash[0]) << 8) | static_cast<quint8>(hash[1]);
-    const quint16 highPort = m_localPortStart + (port % (65535 - m_localPortStart + 1));
-    return highPort;
+    quint16 port = m_localPortStart;
+    while (port < m_localPortStart + DM_MAX_DEVICES_NUM) {
+        bool used = false;
+        QMapIterator<QString, QPointer<IDevice>> i(m_devices);
+        while (i.hasNext()) {
+            i.next();
+            auto device = i.value();
+            if (device && device->isReversePort(port)) {
+                used = true;
+                break;
+            }
+        }
+        if (!used) {
+            return port;
+        }
+        port++;
+    }
+    return 0;
 }
 
 void DeviceManage::removeDevice(const QString &serial)
