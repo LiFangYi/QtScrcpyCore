@@ -25,7 +25,8 @@ protected slots:
     void onDeviceDisconnected(QString serial);
 
 private:
-    quint16 getFreePort();
+    [[nodiscard]] quint16 getFreePort() const;
+    static bool isPortAvailable(quint16 port);
     void removeDevice(const QString& serial);
 
 private:
