@@ -45,8 +45,8 @@ namespace qsc {
             return false;
         }
 
-        quint16 port = 0;
         if (params.useReverse) {
+            quint16 port = 0;
             port = getFreePort();
             if (0 == port) {
                 qInfo("no port available, automatically switch to forward");
